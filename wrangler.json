@@ -3,7 +3,9 @@
 	"name": "wedding-rsvp-backend",
 	"main": "./src/worker/index.ts",
 	"compatibility_date": "2025-10-08",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"observability": {
 		"enabled": true
 	},
@@ -11,5 +13,16 @@
 	"assets": {
 		"directory": "./dist/client",
 		"not_found_handling": "single-page-application"
+	},
+	"kv_namespaces": [
+		{
+			"binding": "RSVP_KV",
+			"id": "e0063c3a0ba7424193ac87a48152c98d",
+			"preview_id": "wedding-rsvp-PREVIEW"
+		}
+	],
+	"vars": {
+		"POLICY_AUD": "4364c4c7c68903097cab657718860928c0cd3b81ca22d9065d1bde898dd66eb9",
+		"TEAM_DOMAIN": "https://dezhang.cloudflareaccess.com"
 	}
 }
