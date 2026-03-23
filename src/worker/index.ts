@@ -16,15 +16,18 @@ app.use("/api/*", async (c, next) => {
     return next();
   }
 
-  const token = c.req.header("cf-access-jwt-assertion");
-  if (!token) {
-    console.error("Auth Error: Missing required CF Access JWT header");
-    return c.json({ error: "Missing required CF Access JWT" }, 403);
-  }
-
   if (!c.env.POLICY_AUD || !c.env.TEAM_DOMAIN) {
     console.error("Auth Error: Missing POLICY_AUD or TEAM_DOMAIN environment variables");
     return c.json({ error: "Missing required environment variables" }, 500);
+  }
+
+  const token = c.req.header("cf-access-jwt-assertion");
+  if (!token) {
+    console.error("Auth Error: Missing required CF Access JWT header");
+    return c.json({ 
+      error: "Missing required CF Access JWT",
+      authUrl: c.env.TEAM_DOMAIN
+    }, 403);
   }
 
   try {
@@ -38,7 +41,10 @@ app.use("/api/*", async (c, next) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`Auth Error: JWT validation failed - ${message}`);
-    return c.json({ error: `Invalid token: ${message}` }, 403);
+    return c.json({ 
+      error: `Invalid token: ${message}`,
+      authUrl: c.env.TEAM_DOMAIN
+    }, 403);
   }
 });
 

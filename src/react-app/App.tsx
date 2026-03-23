@@ -21,19 +21,28 @@ interface ApiResponse {
   error?: string;
 }
 
+interface ApiError extends Error {
+  authUrl?: string;
+}
+
 function App() {
   const [data, setData] = useState<RsvpEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; authUrl?: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/rsvps")
-      .then((res) => {
-        if (res.status === 403 || res.status === 401) {
-          throw new Error("Access denied. Please ensure you are authenticated via Cloudflare Access.");
-        }
+      .then(async (res) => {
         if (!res.ok) {
-          throw new Error(`Failed to fetch: ${res.statusText}`);
+          let errJson: any = {};
+          try {
+            errJson = await res.json();
+          } catch (e) {}
+          const err = new Error(errJson.error || (res.status === 403 || res.status === 401 
+            ? "Access denied. Please ensure you are authenticated via Cloudflare Access." 
+            : `Failed to fetch: ${res.statusText}`)) as ApiError;
+          err.authUrl = errJson.authUrl;
+          throw err;
         }
         return res.json() as Promise<ApiResponse>;
       })
@@ -44,8 +53,11 @@ function App() {
           throw new Error(json.error || "Failed to load RSVP data.");
         }
       })
-      .catch((err) => {
-        setError(err.message);
+      .catch((err: any) => {
+        setError({
+          message: err.message || "An unknown error occurred",
+          authUrl: err.authUrl
+        });
       })
       .finally(() => {
         setLoading(false);
@@ -66,7 +78,12 @@ function App() {
       <div className="dashboard-container">
         <div className="error-state">
           <h2>Authentication or Fetch Error</h2>
-          <p>{error}</p>
+          <p>{error.message}</p>
+          {error.authUrl && (
+            <a href={error.authUrl} className="auth-button">
+              Authenticate
+            </a>
+          )}
         </div>
       </div>
     );
